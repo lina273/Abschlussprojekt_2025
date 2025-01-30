@@ -1,1 +1,1 @@
-# Abschlussproejkt_2025
+# Abschlussprojekt_2025
