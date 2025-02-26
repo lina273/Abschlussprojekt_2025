@@ -1,0 +1,24 @@
+{
+    "points": [
+        {
+            "x": 3.0,
+            "y": 3.0,
+            "type": "Fester Punkt"
+        },
+        {
+            "x": 5.5,
+            "y": 5.0,
+            "type": "Beweglicher Punkt"
+        }
+    ],
+    "links": [
+        {
+            "start": 0,
+            "end": 0
+        },
+        {
+            "start": 0,
+            "end": 1
+        }
+    ]
+}
