@@ -24,7 +24,7 @@ def animation_mechanism(move_list):
             if point["type"] == "Fester Punkt": point_color = "red"
             elif point["type"] == "Beweglicher Punkt": point_color = "blue"
             elif point["type"] == "Kreisbahn Punkt": point_color = "green"
-            else: point_color == "orange"
+            else: point_color = "orange"
 
             ax.scatter(point["x"], point["y"], color=point_color, s=150) #Zeichnen des Punktes
             ax.text(point["x"] + 0.3, point["y"], f"P{i+1}", fontsize=12, color="black") #Beschrfitung des Punktes
@@ -37,7 +37,7 @@ def animation_mechanism(move_list):
             ax.plot(x_vals, y_vals, "blue-", linewidth=3)
 
         animation_diagram.pyplot(fig) #Zeigt aktuelle Grafik an
-        time.spleep(0.1) #pausiert Schleife zwischen jedem Frame aber kann auch weggelassen werden oder verlängert werden
+        time.sleep(0.1) #pausiert Schleife zwischen jedem Frame aber kann auch weggelassen werden oder verlängert werden
         #Vielleicht können wir das durch den User anpassen lassen?
 
 
