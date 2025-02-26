@@ -23,8 +23,10 @@ class mechanism:
         
         
     def getPoints(self):
-        #For debugging
-        return np.concatenate((self.circleGenerator,self.freePoints,self.fixpoints))
+        #for debugging
+        fixPoints = self.mechanism.fixPoints.flatten()
+        
+        return np.concatenate((self.circleGenerator,self.freePoints,fixPoints))
     
     
     def generateLinkMatrix(self,linkConnections,linkNumbers):
