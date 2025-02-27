@@ -1,49 +1,43 @@
-import matplotlib.pyplot as plt 
-import streamlit as st 
+import matplotlib.pyplot as plt
+import streamlit as st
 import time
+from testData import pointArray  
 
-#Funktion zur Animation der Punkte
+link_connections = [[0, 1], [1, 2], [2, 3]] #beispiel
 
-def animation_mechanism(move_list):
+def animation_mechanism(fps=20, container=None):
+    
 
-    st.subheader("Bewegungs_Animation")
+    if container is None:
+        container = st.empty()
 
-    animation_diagram= st.empty() #Platzhalter für Animation, wird dann immer wieder neu geleert und mit den nächsten Daten gefüllt
+    frames = len(pointArray)  
+    num_points = len(pointArray[0])  
 
-    frames = len(move_list) #Anzahl der Animationsschritte, move_list: Liste mit den Positionen aller Punkte für jeden Animationsschritt
+    # Animation
     for f in range(frames):
-        fig, ax = plt.subplots(figsize=(10, 10))  
-        ax.set_xlim(0, 10)  
-        ax.set_xlabel("X", fontsize=14)
-        ax.set_ylim(0, 10)  
-        ax.set_ylabel("Y", fontsize=14)
+        fig, ax = plt.subplots(figsize=(10, 10))
+        ax.set_xlim(-50, 50)
+        ax.set_ylim(-50, 50)
+        ax.set_xlabel("X-Achse", fontsize=14)
+        ax.set_ylabel("Y-Achse", fontsize=14)
         ax.grid(linewidth=1)
 
-        #Schleife die alle Punkte aus move_list holt und nacheiander dargestellt, je nach Typ und Farbe
-        for i, point in enumerate (move_list[f]):
-            if point["type"] == "Fester Punkt": point_color = "red"
-            elif point["type"] == "Beweglicher Punkt": point_color = "blue"
-            elif point["type"] == "Kreisbahn Punkt": point_color = "green"
-            else: point_color = "orange"
 
-            ax.scatter(point["x"], point["y"], color=point_color, s=150) #Zeichnen des Punktes
-            ax.text(point["x"] + 0.3, point["y"], f"P{i+1}", fontsize=12, color="black") #Beschrfitung des Punktes
-        
-        #Schleife die die Glieder zwischen Punkten zeichnet
-        for link in st.session_state["links"]:
-            start_x, end_x = link["start"], link["end"] 
-            x_vals = [move_list[f][start_x]["x"], move_list[f][end_x]["x"]]  # X Positionen des Start und Endpunktes
-            y_vals = [move_list[f][start_x]["y"], move_list[f][end_x]["y"]]  #Y Postionen des Start und Endpunktes
-            ax.plot(x_vals, y_vals, "blue-", linewidth=3)
+        for i, point in enumerate(pointArray[f]):
+            x, y = point  
+            ax.scatter(x, y, color="blue", s=100)
+            ax.text(x + 0.5, y, f"P{i+1}", fontsize=10, color="black")
 
-        animation_diagram.pyplot(fig) #Zeigt aktuelle Grafik an
-        time.sleep(0.1) #pausiert Schleife zwischen jedem Frame aber kann auch weggelassen werden oder verlängert werden
-        #Vielleicht können wir das durch den User anpassen lassen?
+       
+        for link in link_connections:
+            start_idx, end_idx = link
+            if start_idx < num_points and end_idx < num_points:
+                x_vals = [pointArray[f][start_idx][0], pointArray[f][end_idx][0]]
+                y_vals = [pointArray[f][start_idx][1], pointArray[f][end_idx][1]]
+                ax.plot(x_vals, y_vals, "b-", linewidth=2)
 
+        container.pyplot(fig)
+        time.sleep(1 / fps)
 
-
-
-
-        
-
-
+    st.session_state["animation_running"] = False

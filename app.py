@@ -2,107 +2,138 @@ import streamlit as st
 import json
 import numpy as np
 import matplotlib.pyplot as plt
+from animation import animation_mechanism
 
-# Setzt das Layout auf volle Breite
 st.set_page_config(layout="wide")
 st.title("Strandbeest Simulator")
 
-# Session State initialisieren
+
 if "points" not in st.session_state:
     st.session_state["points"] = []
 if "links" not in st.session_state:
     st.session_state["links"] = []
-if "new_point_type" not in st.session_state:
-    st.session_state["new_point_type"] = "Fester Punkt"
+if "link_lengths" not in st.session_state:
+    st.session_state["link_lengths"] = []
+if "animation_running" not in st.session_state:
+    st.session_state["animation_running"] = False  
 
-# Nutzung der vollen Bildschirmbreite
-col1, col2 = st.columns([2, 3])  
+col1, col2 = st.columns([3, 3])
 
-# Linke Seite: Koordinatensystem
+
 with col1:
     st.subheader("Koordinatensystem")
-    fig, ax = plt.subplots(figsize=(15, 15))  
-    ax.set_xlim(0, 10)  
-    ax.set_ylim(0, 10)  
+    
+    fig, ax = plt.subplots(figsize=(15, 15))
+    ax.set_xlim(0, 15)
+    ax.set_ylim(0, 15)
     ax.set_xlabel("X-Achse", fontsize=14)
     ax.set_ylabel("Y-Achse", fontsize=14)
     ax.grid(True, linewidth=1)
 
     for i, p in enumerate(st.session_state["points"]):
-        color = "red" if p["type"] == "Fester Punkt" else \
-                "blue" if p["type"] == "Beweglicher Punkt" else \
-                "green" if p["type"] == "Kreisbahn Punkt" else "orange"
-
+        color = {"Fester Punkt": "red", "Beweglicher Punkt": "blue", "Kreisbahn Punkt": "green"}.get(p["type"], "orange")
         ax.scatter(p["x"], p["y"], color=color, s=150)
         ax.text(p["x"] + 0.3, p["y"], f"P{i+1}", fontsize=12, color="black")
 
-    for link in st.session_state["links"]:
+    for j, link in enumerate(st.session_state["links"]):
         start_idx, end_idx = link["start"], link["end"]
         x_vals = [st.session_state["points"][start_idx]["x"], st.session_state["points"][end_idx]["x"]]
         y_vals = [st.session_state["points"][start_idx]["y"], st.session_state["points"][end_idx]["y"]]
         ax.plot(x_vals, y_vals, "b-", linewidth=3)
+        ax.text((x_vals[0] + x_vals[1]) / 2, (y_vals[0] + y_vals[1]) / 2, f"L={st.session_state['link_lengths'][j]:.2f}", fontsize=12, color="black")
 
     st.pyplot(fig)
 
+
+    st.subheader("Bewegungsanimation")
+    animation_container = st.empty()
+    if st.session_state["animation_running"]:
+        with open("mechanism_data.json", "r") as file:
+            mechanism_data = json.load(file)
+        animation_mechanism(mechanism_data["pointArray"], mechanism_data["linkConnections"], container=animation_container)
+        st.session_state["animation_running"] = False  
+        st.rerun()
+
+
 with col2:
     st.subheader("Punkte erstellen")
-
-    # Eingabe  X, Y und Punkt-Typ
     col_x, col_y, col_type = st.columns([1, 1, 2])
-    with col_x:
-        x_new = st.number_input("X", value=1.0, step=0.5, min_value=0.0, key="new_x", format="%.2f")
-    with col_y:
-        y_new = st.number_input("Y", value=1.0, step=0.5, min_value=0.0, key="new_y", format="%.2f")
-    with col_type:
-        st.session_state["new_point_type"] = st.selectbox(
-            "Punkt-Typ",
-            ["Fester Punkt", "Beweglicher Punkt", "Kreisbahn Punkt"],
-            index=["Fester Punkt", "Beweglicher Punkt", "Kreisbahn Punkt"].index(st.session_state["new_point_type"]),
-            key="new_point_type_select"
-        )
+    with col_x: x_new = st.number_input("X", value=1.0, step=0.5, min_value=0.0, key="new_x", format="%.2f")
+    with col_y: y_new = st.number_input("Y", value=1.0, step=0.5, min_value=0.0, key="new_y", format="%.2f")
+    with col_type: point_type = st.selectbox("Punkt-Typ", ["Fester Punkt", "Beweglicher Punkt", "Kreisbahn Punkt"], key="new_point_type_select")
 
-    # Punkte hinzufügen
-    if st.button("Punkt hinzufügen", key="add_point"):
-        new_point = {"x": x_new, "y": y_new, "type": st.session_state["new_point_type"]}
-
-        st.session_state["points"].append(new_point)    
+    if st.button("➕ Punkt hinzufügen"):
+        st.session_state["points"].append({"x": x_new, "y": y_new, "type": point_type})
         st.rerun()
 
-    # Bestehende Punkte (immer sichtbar)
-    st.subheader("Bestehende Punkte")
-    point_options = [f"P{i+1}: {p['type']} (X:{p['x']}, Y:{p['y']})" for i, p in enumerate(st.session_state["points"])]
-    selected_point = st.selectbox("Punkt auswählen", point_options if point_options else ["Keine Punkte vorhanden"], key="selected_point", disabled=not point_options)
 
-    # Punkt löschen (Button bleibt immer sichtbar)
-    if st.button("🗑️ Punkt löschen", key="delete_point", disabled=not point_options):
-        index_to_delete = st.session_state["points"].index(next(p for i, p in enumerate(st.session_state["points"]) if f"P{i+1}" in selected_point))
-        del st.session_state["points"][index_to_delete]
-        st.rerun()
+    st.subheader("Punkte löschen")
+    if st.session_state["points"]:
+        point_options_delete = [f"P{i+1} ({p['type']})" for i, p in enumerate(st.session_state["points"])]
+        selected_point = st.selectbox("Punkt auswählen", point_options_delete, key="delete_point")
 
-    # Glieder verbinden 
+        if st.button("🗑️ Punkt löschen"):
+            delete_index = point_options_delete.index(selected_point)
+            del st.session_state["points"][delete_index]
+            st.rerun()
+    else:
+        st.write("Keine Punkte zum Löschen vorhanden.")
+
+
     st.subheader("Glieder verbinden")
-    point_options_simple = [f"P{i+1}" for i in range(len(st.session_state["points"]))] if st.session_state["points"] else ["Keine Punkte vorhanden"]
+    if st.session_state["points"]:
+        point_options_simple = [f"P{i+1}" for i in range(len(st.session_state["points"]))]
+    else:
+        point_options_simple = ["Keine Punkte vorhanden"]
 
-    start_point = st.selectbox("Startpunkt", point_options_simple, key="start", disabled=len(st.session_state["points"]) < 2)
-    end_point = st.selectbox("Endpunkt", point_options_simple, key="end", disabled=len(st.session_state["points"]) < 2)
+    col_start, col_end, col_length = st.columns([1, 1, 2])
+    with col_start:start_point = st.selectbox("Startpunkt", point_options_simple, key="start", disabled=len(st.session_state["points"]) < 2)
+    with col_end:end_point = st.selectbox("Endpunkt", point_options_simple, key="end", disabled=len(st.session_state["points"]) < 2)
+    with col_length:length = st.number_input("Länge des Glieds", min_value=0.1, value=1.0, step=0.1, format="%.2f")
 
     if st.button("🔗 Glied hinzufügen", disabled=len(st.session_state["points"]) < 2):
         start_idx, end_idx = point_options_simple.index(start_point), point_options_simple.index(end_point)
         st.session_state["links"].append({"start": start_idx, "end": end_idx})
+        st.session_state["link_lengths"].append(length)
         st.rerun()
 
-    st.subheader("Glieder löschen")
-    link_options = [f"{point_options_simple[link['start']]} - {point_options_simple[link['end']]}" for link in st.session_state["links"]]
-    selected_link = st.selectbox("Bestehende Glieder", link_options if link_options else ["Keine Glieder vorhanden"], key="selected_link", disabled=not link_options)
+  
+    if st.button("💾 Mechanismus speichern"):
+        fix_points = []
+        free_points = []
+        circle_generator = []
 
-    if st.button("🗑️ Glied löschen", disabled=not link_options):
-        link_index = link_options.index(selected_link)
-        del st.session_state["links"][link_index]
-        st.rerun()
+        for p in st.session_state["points"]:
+            if p["type"] == "Fester Punkt":
+                fix_points.append([p["x"], p["y"]])
+            elif p["type"] == "Beweglicher Punkt":
+                free_points.append([p["x"], p["y"]])
+            elif p["type"] == "Kreisbahn Punkt":
+                circle_generator.append([p["x"], p["y"]])
 
+       
+        if len(circle_generator) != 2:
+            circle_generator = []
 
-    if st.button("💾 Daten speichern", key="Daten speichern"):
-        data = {"points": st.session_state["points"], "links": st.session_state["links"]}
+  
+        link_connections = [[link["start"], link["end"]] for link in st.session_state["links"]]
+        link_numbers = list(range(len(st.session_state["links"])))
+
+        
+        data = {
+            "linkConnections": link_connections,
+            "linkNumbers": link_numbers,
+            "circleGenerator": circle_generator,
+            "freePoints": free_points,
+            "fixPoints": fix_points
+        }
+
         with open("mechanism_data.json", "w") as file:
             json.dump(data, file, indent=4)
-        st.success("Daten gespeichert! `example.py` kann sie jetzt nutzen.")
+
+        st.success("Daten gespeichert!")
+
+
+    if st.button("▶️ Animation starten"):
+        st.session_state["animation_running"] = True
+        animation_mechanism(container=animation_container)
