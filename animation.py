@@ -23,13 +23,13 @@ def animation_mechanism(fps=20, container=None):
         ax.set_ylabel("Y-Achse", fontsize=14)
         ax.grid(linewidth=1)
 
-        # Punkte zeichnen
+
         for i, point in enumerate(pointArray[f]):
             x, y = point  
             ax.scatter(x, y, color="blue", s=100)
             ax.text(x + 0.5, y, f"P{i+1}", fontsize=10, color="black")
 
-        # Verbindungen zwischen Punkten zeichnen
+       
         for link in link_connections:
             start_idx, end_idx = link
             if start_idx < num_points and end_idx < num_points:
