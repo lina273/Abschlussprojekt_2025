@@ -4,9 +4,11 @@ import numpy as np
 import matplotlib.pyplot as plt
 from animation import animation_mechanism
 
+import mechanism
+import solver
+
 st.set_page_config(layout="wide")
 st.title("Strandbeest Simulator")
-
 
 if "points" not in st.session_state:
     st.session_state["points"] = []
@@ -116,9 +118,26 @@ with col2:
             circle_generator = []
 
   
-        link_connections = [[link["start"], link["end"]] for link in st.session_state["links"]]
+        link_connections = [[link["start"]-1, link["end"]-1] for link in st.session_state["links"]]
         link_numbers = list(range(len(st.session_state["links"])))
 
+        
+        print("linkConnections:\n",np.array(link_connections))
+        print("linkNumbers:\n",np.array(link_numbers))
+        
+        print("fixPoints:\n",np.array(fix_points))
+        print("freePoints:\n",np.array(free_points))
+        print("circleGenerator:\n",np.array(circle_generator))
+        
+        newMechanism = mechanism.mechanism(np.array(circle_generator),np.array([3,4,4,4]),np.array(fix_points),np.array(free_points))
+        newMechanism.generateLinkMatrix(link_connections,link_numbers)
+        newMechanism.showLinkMatrix()
+        
+        mainSolver = solver.solver(newMechanism)
+        
+        
+        st.session_state["linkConnections"] = np.array(link_connections)
+        st.session_state["pointArray"] = mainSolver.prepareKinematics(0.2)
         
         data = {
             "linkConnections": link_connections,
@@ -127,7 +146,7 @@ with col2:
             "freePoints": free_points,
             "fixPoints": fix_points
         }
-
+        
         with open("mechanism_data.json", "w") as file:
             json.dump(data, file, indent=4)
 
@@ -136,4 +155,5 @@ with col2:
 
     if st.button("▶️ Animation starten"):
         st.session_state["animation_running"] = True
-        animation_mechanism(container=animation_container)
+        animation_mechanism(st.session_state["pointArray"],st.session_state["linkConnections"],container=animation_container)
+        

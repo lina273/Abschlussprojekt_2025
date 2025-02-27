@@ -85,7 +85,7 @@ class solver:
             cLength = np.sqrt(cLength[0]**2 + cLength[1]**2)
             cPoint = self.mechanism.circleGenerator[0] + np.array([cLength*np.cos(startPhi+i), cLength*np.sin(startPhi+i)])
             
-            allPoints = np.concatenate((cPoint,freePoints,fixPoints)).reshape((-1,2))
+            allPoints = np.concatenate((cPoint,freePoints,fixPoints)).reshape((-1,2)).tolist()
             
             pointArray.append(allPoints)
             

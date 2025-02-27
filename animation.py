@@ -1,11 +1,8 @@
 import matplotlib.pyplot as plt
 import streamlit as st
 import time
-from testData import pointArray  
 
-link_connections = [[0, 1], [1, 2], [2, 3]] #beispiel
-
-def animation_mechanism(fps=20, container=None):
+def animation_mechanism(pointArray,link_connections,fps=20, container=None):
     
 
     if container is None:
