@@ -89,6 +89,13 @@ class solver:
             
             pointArray.append(allPoints)
             
+            csvArray = []
+            
+        for i in pointArray:
+            csvArray.append(np.array(i).flatten())
+            
         print("Prepared points in:", time.time()-start,"seconds.")
+        print("Printing points to csv...")
+        np.savetxt("points.csv", csvArray, delimiter=",")
         return pointArray
     
